@@ -50,6 +50,7 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
     var currentState = SlideOutState()
     var shouldHideStatusBar = true
     private var errorOnLoad = false
+    private var sentDeleteNotification: Bool = false
     
     // MARK: - Init
     
@@ -110,10 +111,15 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
                 let fileManager = NSFileManager.defaultManager()
                 
                 if fileManager.fileExistsAtPath(epubPath!, isDirectory:&isDir) {
-                    if isDir {
-                        book = FREpubParser().readEpub(filePath: epubPath!)
-                    } else {
-                        book = FREpubParser().readEpub(epubPath: epubPath!)
+                    do {
+                        if isDir {
+                            book = try FREpubParser().readEpub(filePath: epubPath!)
+                        } else {
+                            book = try FREpubParser().readEpub(epubPath: epubPath!, basePath: readerConfig.localizedBooksDirectoryPath)
+                        }
+                    } catch {
+                        print("Error in parsing epub")
+                        self.errorOnLoad = true
                     }
                 }
                 else {
@@ -125,16 +131,18 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
                 
                 // Reload data
                 dispatch_async(dispatch_get_main_queue(), {
-                    self.centerViewController.reloadData()
-                    self.addLeftPanelViewController()
-                    self.addAudioPlayer()
-                    
-                    // Open panel if does not have a saved point
-                    if FolioReader.defaults.valueForKey(kBookId) == nil {
-                        self.toggleLeftPanel()
+                    if !self.errorOnLoad {
+                        self.centerViewController.reloadData()
+                        self.addLeftPanelViewController()
+                        self.addAudioPlayer()
+                        
+                        // Open panel if does not have a saved point
+                        if FolioReader.defaults.valueForKey(kBookId) == nil {
+                            self.toggleLeftPanel()
+                        }
+                        
+                        FolioReader.sharedInstance.isReaderReady = true
                     }
-                    
-                    FolioReader.sharedInstance.isReaderReady = true
                 })
             })
         } else {
@@ -148,8 +156,17 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
         showShadowForCenterViewController(true)
         
         if errorOnLoad {
-            dismissViewControllerAnimated(true, completion: nil)
+            dismissViewControllerAnimated(true, completion: { () -> Void in
+                NSNotificationCenter.defaultCenter().postNotificationName("epubParsingErrorNotificationKey", object: nil, userInfo: ["bookId": kBookId])
+            })
         }
+        else {
+            if !sentDeleteNotification {
+                sentDeleteNotification = true
+                NSNotificationCenter.defaultCenter().postNotificationName("epubDeleteNotificationKey", object: nil, userInfo: ["bookId": kBookId, "bookPath": epubPath!])
+            }
+        }
+            
     }
     
     // MARK: CenterViewController delegate methods

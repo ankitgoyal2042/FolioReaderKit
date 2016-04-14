@@ -341,7 +341,7 @@ class FolioReaderCenter: UIViewController, UICollectionViewDelegate, UICollectio
             rightBarIcons.append(UIBarButtonItem(image: audioIcon, style: UIBarButtonItemStyle.Plain, target: self, action:"togglePlay:"))
         }
 
-        navigationItem.rightBarButtonItems = rightBarIcons
+//        navigationItem.rightBarButtonItems = rightBarIcons
     }
 
     func reloadData() {
@@ -616,8 +616,9 @@ class FolioReaderCenter: UIViewController, UICollectionViewDelegate, UICollectio
         
         // Set navigation title
         if let chapterName = getCurrentChapterName() {
-            title = chapterName
-        } else { title = ""}
+//            title = chapterName
+            title = book.title()
+        } else { title = book.title() }
         
         // Set pages
         if let page = currentPage {

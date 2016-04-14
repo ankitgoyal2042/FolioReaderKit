@@ -24,6 +24,8 @@ public class FolioReaderConfig: NSObject {
     // Custom actions
     public var shouldHideNavigationOnTap: Bool!
     public var allowSharing: Bool!
+    public var keepOriginalEpub: Bool!
+//    public var bookObject: Book!
     
     // Reader Strings
     public var localizedHighlightsTitle: String
@@ -45,6 +47,7 @@ public class FolioReaderConfig: NSObject {
     public var localizedShareHighlightSubject: String
     public var localizedShareAllExcerptsFrom: String
     public var localizedShareBy: String
+    public var localizedBooksDirectoryPath: String
     
     // MARK: - Init with defaults
     
@@ -60,6 +63,8 @@ public class FolioReaderConfig: NSObject {
 
         self.shouldHideNavigationOnTap = true
         self.allowSharing = true
+        self.keepOriginalEpub = true
+//        self.bookObject = Book()
         
         self.localizedHighlightsTitle = NSLocalizedString("Highlights", comment: "")
         self.localizedHighlightsDateFormat = "MMM dd, YYYY | HH:mm"
@@ -80,6 +85,7 @@ public class FolioReaderConfig: NSObject {
         self.localizedShareHighlightSubject = NSLocalizedString("Notes from", comment: "")
         self.localizedShareAllExcerptsFrom = NSLocalizedString("All excerpts from", comment: "")
         self.localizedShareBy = NSLocalizedString("by", comment: "")
+        self.localizedBooksDirectoryPath = kApplicationDocumentsDirectory.stringByAppendingString("/books")
         
         super.init()
     }

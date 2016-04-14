@@ -120,6 +120,7 @@ public class FolioReader {
     public class func presentReader(parentViewController parentViewController: UIViewController, withEpubPath epubPath: String, andConfig config: FolioReaderConfig, animated: Bool = true) {
         let reader = FolioReaderContainer(config: config, epubPath: epubPath)
         FolioReader.sharedInstance.readerContainer = reader
+        kBookId = (epubPath as NSString).lastPathComponent
         parentViewController.presentViewController(reader, animated: animated, completion: nil)
     }
     

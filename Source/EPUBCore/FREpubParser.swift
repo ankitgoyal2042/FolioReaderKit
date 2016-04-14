@@ -10,43 +10,64 @@ import UIKit
 import SSZipArchive
 import AEXML
 
+enum ParsingError: ErrorType {
+    case Empty
+}
+
 class FREpubParser: NSObject, SSZipArchiveDelegate {
     let book = FRBook()
     var bookBasePath: String!
     var resourcesBasePath: String!
     private var epubPathToRemove: String?
+    private var errorInParsing: Bool = false
     
     /**
     Unzip, delete and read an epub file.
     Returns a FRBook.
     */
-    func readEpub(epubPath withEpubPath: String) -> FRBook {
+    func readEpub(epubPath withEpubPath: String, basePath: String) throws -> FRBook {
         epubPathToRemove = withEpubPath
         
         // Unzip   
         let bookName = (withEpubPath as NSString).lastPathComponent
-        bookBasePath = (kApplicationDocumentsDirectory as NSString).stringByAppendingPathComponent(bookName)
+        
+        // Master code
+//        bookBasePath = (kApplicationDocumentsDirectory as NSString).stringByAppendingPathComponent(bookName)
+//        SSZipArchive.unzipFileAtPath(withEpubPath, toDestination: bookBasePath, delegate: self)
+        
+        // Our code
+        bookBasePath = (basePath as NSString).stringByAppendingPathComponent(bookName)
         SSZipArchive.unzipFileAtPath(withEpubPath, toDestination: bookBasePath, delegate: self)
         
         // Skip from backup this folder
         addSkipBackupAttributeToItemAtURL(NSURL(fileURLWithPath: bookBasePath, isDirectory: true))
         
-        kBookId = bookName
         readContainer()
-        readOpf()
-        return book
+        
+        if errorInParsing {
+            throw ParsingError.Empty
+        }
+        else {
+            readOpf()
+            return book
+        }
     }
     
     /**
     Read an unziped epub file.
     Returns a FRBook.
     */
-    func readEpub(filePath withFilePath: String) -> FRBook {
+    func readEpub(filePath withFilePath: String) throws -> FRBook {
         bookBasePath = withFilePath
-        kBookId = (withFilePath as NSString).lastPathComponent
         readContainer()
-        readOpf()
-        return book
+        
+        if errorInParsing {
+            throw ParsingError.Empty
+        }
+        else {
+            readOpf()
+            return book
+        }
     }
     
     /**
@@ -57,6 +78,10 @@ class FREpubParser: NSObject, SSZipArchiveDelegate {
         let containerData = try? NSData(contentsOfFile: (bookBasePath as NSString).stringByAppendingPathComponent(containerPath), options: .DataReadingMappedAlways)
         
         do {
+            if containerData == nil {
+                errorInParsing = true
+                return
+            }
             let xmlDoc = try AEXMLDocument(xmlData: containerData!)
             let opfResource = FRResource()
             opfResource.href = xmlDoc.root["rootfiles"]["rootfile"].attributes["full-path"]
@@ -319,10 +344,13 @@ class FREpubParser: NSObject, SSZipArchiveDelegate {
     // MARK: - SSZipArchive delegate
     
     func zipArchiveWillUnzipArchiveAtPath(path: String!, zipInfo: unz_global_info) {
-        do {
-            try NSFileManager.defaultManager().removeItemAtPath(epubPathToRemove!)
-        } catch let error as NSError {
-            print(error)
+        if readerConfig.keepOriginalEpub == false {
+            do {
+                try NSFileManager.defaultManager().removeItemAtPath(epubPathToRemove!)
+            }
+            catch let error as NSError {
+                debugPrint(error)
+            }
         }
     }
 }
