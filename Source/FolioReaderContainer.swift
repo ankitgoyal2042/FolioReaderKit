@@ -49,6 +49,8 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
     var centerPanelExpandedOffset: CGFloat = 70
     var currentState = SlideOutState()
     var shouldHideStatusBar = true
+    private var shouldRemoveEpub = true
+    
     private var errorOnLoad = false
     private var sentDeleteNotification: Bool = false
     
@@ -58,9 +60,10 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
         super.init(coder: aDecoder)
     }
     
-    init(config configOrNil: FolioReaderConfig!, epubPath epubPathOrNil: String? = nil) {
+    init(config configOrNil: FolioReaderConfig!, epubPath epubPathOrNil: String? = nil, removeEpub: Bool) {
         readerConfig = configOrNil
         epubPath = epubPathOrNil
+        shouldRemoveEpub = removeEpub
         super.init(nibName: nil, bundle: NSBundle.frameworkBundle())
         
         // Init with empty book
@@ -96,9 +99,9 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
         centerNavigationController.didMoveToParentViewController(self)
         
         // Add gestures
-        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: "handleTapGesture:")
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(FolioReaderContainer.handleTapGesture(_:)))
         tapGestureRecognizer.numberOfTapsRequired = 1
-        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: "handlePanGesture:")
+        let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(FolioReaderContainer.handlePanGesture(_:)))
         centerNavigationController.view.addGestureRecognizer(tapGestureRecognizer)
         centerNavigationController.view.addGestureRecognizer(panGestureRecognizer)
 
@@ -115,7 +118,7 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
                         if isDir {
                             book = try FREpubParser().readEpub(filePath: epubPath!)
                         } else {
-                            book = try FREpubParser().readEpub(epubPath: epubPath!, basePath: readerConfig.localizedBooksDirectoryPath)
+                            book = try FREpubParser().readEpub(epubPath: epubPath!, removeEpub: self.shouldRemoveEpub)
                         }
                     } catch {
                         print("Error in parsing epub")
@@ -129,9 +132,9 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
                 
                 FolioReader.sharedInstance.isReaderOpen = true
                 
-                // Reload data
-                dispatch_async(dispatch_get_main_queue(), {
-                    if !self.errorOnLoad {
+                if !self.errorOnLoad {
+                    // Reload data
+                    dispatch_async(dispatch_get_main_queue(), {
                         self.centerViewController.reloadData()
                         self.addLeftPanelViewController()
                         self.addAudioPlayer()
@@ -142,8 +145,8 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
                         }
                         
                         FolioReader.sharedInstance.isReaderReady = true
-                    }
-                })
+                    })
+                }
             })
         } else {
             print("Epub path is nil.")

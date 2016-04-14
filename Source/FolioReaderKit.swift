@@ -53,8 +53,8 @@ enum MediaOverlayStyle: Int {
 /**
 *  Main Library class with some useful constants and methods
 */
-public class FolioReader {
-    private init() {}
+public class FolioReader : NSObject {
+    private override init() {}
     
     static let sharedInstance = FolioReader()
     static let defaults = NSUserDefaults.standardUserDefaults()
@@ -64,6 +64,7 @@ public class FolioReader {
     var readerAudioPlayer: FolioReaderAudioPlayer!
     var isReaderOpen = false
     var isReaderReady = false
+    
     
     var nightMode: Bool {
         get { return FolioReader.defaults.valueForKey(kNightMode) as! Bool }
@@ -111,25 +112,26 @@ public class FolioReader {
             FolioReader.defaults.synchronize()
         }
     }
+    
+    // MARK: - Get Cover Image
+    
+    /**
+     Read Cover Image and Return an IUImage
+     */
+    
+    public class func getCoverImage(epubPath: String) -> UIImage? {
+        return FREpubParser().parseCoverImage(epubPath)
+    }
 
     // MARK: - Present Folio Reader
     
     /**
     Present a Folio Reader for a Parent View Controller.
     */
-    public class func presentReader(parentViewController parentViewController: UIViewController, withEpubPath epubPath: String, andConfig config: FolioReaderConfig, animated: Bool = true) {
-        let reader = FolioReaderContainer(config: config, epubPath: epubPath)
+    public class func presentReader(parentViewController parentViewController: UIViewController, withEpubPath epubPath: String, andConfig config: FolioReaderConfig, shouldRemoveEpub: Bool = true, animated: Bool = true) {
+        let reader = FolioReaderContainer(config: config, epubPath: epubPath, removeEpub: shouldRemoveEpub)
         FolioReader.sharedInstance.readerContainer = reader
         kBookId = (epubPath as NSString).lastPathComponent
-        parentViewController.presentViewController(reader, animated: animated, completion: nil)
-    }
-    
-    /**
-    Present a Folio Reader for a Parent View Controller.
-    */
-    public class func presentReader(parentViewController parentViewController: UIViewController, andConfig config: FolioReaderConfig, animated: Bool = true) {
-        let reader = FolioReaderContainer(config: config)
-        FolioReader.sharedInstance.readerContainer = reader
         parentViewController.presentViewController(reader, animated: animated, completion: nil)
     }
     
@@ -455,7 +457,7 @@ extension UIImage {
 extension UIViewController: UIGestureRecognizerDelegate {
     
     func setCloseButton() {
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(readerImageNamed: "icon-close"), style: UIBarButtonItemStyle.Plain, target: self, action:"dismiss")
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(readerImageNamed: "icon-close"), style: UIBarButtonItemStyle.Plain, target: self, action:#selector(UIViewController.dismiss))
     }
     
     func dismiss() {
