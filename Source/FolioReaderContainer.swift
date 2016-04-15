@@ -166,7 +166,7 @@ class FolioReaderContainer: UIViewController, FolioReaderSidePanelDelegate {
         else {
             if !sentDeleteNotification {
                 sentDeleteNotification = true
-                NSNotificationCenter.defaultCenter().postNotificationName("epubDeleteNotificationKey", object: nil, userInfo: ["bookId": kBookId, "bookPath": epubPath!])
+                NSNotificationCenter.defaultCenter().postNotificationName("updateFilePathNotificationKey", object: nil, userInfo: ["bookId": kBookId])
             }
         }
             

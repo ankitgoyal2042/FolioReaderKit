@@ -192,6 +192,9 @@ class FolioReaderSidePanel: UIViewController, UITableViewDelegate, UITableViewDa
             FolioReader.sharedInstance.isReaderOpen = false
             FolioReader.sharedInstance.isReaderReady = false
             FolioReader.sharedInstance.readerAudioPlayer.stop()
+            
+            //  Shows intertitial whenever user taps close button
+            NSNotificationCenter.defaultCenter().postNotificationName("showInterstitialOnReaderExitNotificationKey", object: nil)
         })
     }
     

@@ -51,9 +51,6 @@ class ViewController: UIViewController {
     }
 
     func setCover(button: UIButton, index: Int) {
-        let epubName = epubSampleFiles[index];
-        let bookPath = NSBundle.mainBundle().pathForResource(epubName, ofType: "epub")
-        
 //        if let image = FolioReader.getCoverImage(bookPath!) {
 //            button.setBackgroundImage(image, forState: .Normal)
 //        }
